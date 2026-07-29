@@ -1,0 +1,16 @@
+services:
+  mushr:
+    image: mushr/mushr:x86_64
+    container_name: mushr_sim
+    platform: linux/amd64
+    network_mode: bridge
+    ports:
+      - "9090:9090"   # rosbridge websocket (Foxglove)
+    volumes:
+      - ../:/assignment
+    environment:
+      - ROS_HOSTNAME=localhost
+    working_dir: /assignment
+    command: sleep infinity
+    tty: true
+    stdin_open: true

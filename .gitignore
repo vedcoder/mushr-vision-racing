@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# LaTeX build artifacts (keep the .tex and .pdf)
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.toc
+
+# profiling junk
+*.profraw
+
+# generated at runtime / reproducible via sim/scripts
+sim/logs/
+sim/maps/
+
+# python
+__pycache__/
+*.pyc

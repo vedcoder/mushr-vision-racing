@@ -1,0 +1,78 @@
+development:
+- name: straight_box
+  type: box
+  x: 13.2
+  y: 3.65
+  yaw: 0.0
+  size:
+  - 0.6
+  - 0.45
+- name: corner_barrel
+  type: cylinder
+  x: 25.2
+  y: 11.8
+  yaw: 0.0
+  radius: 0.28
+- name: gate_left
+  type: box
+  x: 17.0
+  y: 20.55
+  yaw: 0.15
+  size:
+  - 0.45
+  - 0.35
+- name: gate_right
+  type: box
+  x: 17.15
+  y: 19.35
+  yaw: 0.15
+  size:
+  - 0.45
+  - 0.35
+evaluation_A:
+- name: box_A1
+  type: box
+  x: 18.8
+  y: 3.25
+  yaw: 0.05
+  size:
+  - 0.55
+  - 0.45
+- name: barrel_A2
+  type: cylinder
+  x: 23.3
+  y: 18.5
+  yaw: 0.0
+  radius: 0.3
+evaluation_B:
+- name: box_B1
+  type: box
+  x: 5.5
+  y: 12.2
+  yaw: -0.4
+  size:
+  - 0.55
+  - 0.4
+- name: box_B2
+  type: box
+  x: 11.2
+  y: 19.0
+  yaw: 0.2
+  size:
+  - 0.5
+  - 0.4
+evaluation_C:
+- name: barrel_C1
+  type: cylinder
+  x: 26.0
+  y: 8.4
+  yaw: 0.0
+  radius: 0.3
+- name: box_C2
+  type: box
+  x: 7.1
+  y: 4.0
+  yaw: 0.0
+  size:
+  - 0.65
+  - 0.4

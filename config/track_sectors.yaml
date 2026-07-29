@@ -1,0 +1,16 @@
+start_finish:
+  x: 3.4
+  y: 4.0
+  yaw: 0.0
+long_straight:
+  from_waypoint: 8
+  to_waypoint: 54
+east_hairpin:
+  from_waypoint: 62
+  to_waypoint: 96
+upper_chicane:
+  from_waypoint: 115
+  to_waypoint: 158
+west_complex:
+  from_waypoint: 190
+  to_waypoint: 245
