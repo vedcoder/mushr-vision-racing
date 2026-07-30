@@ -1,0 +1,6 @@
+# Force LF endings so scripts run inside the Linux container even when
+# cloned on Windows/WSL (CRLF breaks bash: "$'\r': command not found").
+* text=auto eol=lf
+*.png binary
+*.pgm binary
+*.pdf binary
