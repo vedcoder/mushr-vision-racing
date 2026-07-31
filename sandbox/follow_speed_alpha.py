@@ -11,6 +11,7 @@ import numpy as np
 import rospy
 from ackermann_msgs.msg import AckermannDriveStamped
 from nav_msgs.msg import Odometry
+from std_msgs.msg import Float32
 
 WAYPOINTS_CSV = "/assignment/track/centerline_waypoints.csv"
 LOOKAHEAD = 1.2
@@ -31,9 +32,12 @@ class PurePursuit:
         self.n = len(self.wp)
         self.pose = None
         self.nearest = 0
+        self.sign_cap = 1.8   # NORMAL rules until the detector says otherwise
         self.pub = rospy.Publisher("/car/mux/ackermann_cmd_mux/input/navigation",
                                    AckermannDriveStamped, queue_size=1)
         rospy.Subscriber("/mushr_sim/car/odom", Odometry, self.on_odom, queue_size=1)
+        rospy.Subscriber("/race/sign_speed_cap", Float32,
+                         lambda m: setattr(self, "sign_cap", m.data), queue_size=1)
         rospy.loginfo("loaded %d waypoints", self.n)
 
     def on_odom(self, msg):
@@ -73,6 +77,7 @@ class PurePursuit:
             # ======= YOUR SPEED LAW: alpha small -> fast, alpha big -> slow =======
             speed = V_MAX / (1.0 + K_ALPHA * abs(alpha))
             speed = max(V_MIN, min(V_MAX, speed))
+            speed = min(speed, self.sign_cap)   # sign zone is a hard ceiling
             # ======================================================================
 
             msg = AckermannDriveStamped()
