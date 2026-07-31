@@ -80,4 +80,31 @@ a short screen capture + the topic echo.
 
 ---
 
+## Sandbox prototypes (pre-Step-1 learning experiments) ✅
+
+Three throwaway scripts in `sandbox/` — not part of the final package, but
+they prototype the core loops and are worth reading in order:
+
+1. **`move_forward.py`** — the "hello world": stream
+   AckermannDriveStamped at 10 Hz to the navigation mux input. Lesson: the
+   mux stops the car ~0.2 s after you stop publishing; commands are a
+   stream, not one-shots.
+2. **`move_until_wall.py`** — LiDAR reflex: watch a ±20° forward cone of
+   `/car/scan`, stop when clearance < 0.6 m. Lesson learned the hard way:
+   the (realistic) laser noise model produces phantom short readings on
+   single rays — the first version stopped for a ghost. Fix: require ≥5
+   adjacent rays to agree before believing an obstacle. Never act on a
+   single sensor reading.
+3. **`follow_speed_alpha.py`** (and constant-speed `follow_waypoints.py`) —
+   Pure Pursuit chasing a carrot 1.2 m ahead on the centerline, plus a
+   reactive speed law `v = 2.0/(1+4|alpha|)` clipped to [0.8, 2.0].
+   **Result: full autonomous laps, ~64 s, zero wall contact, lateral error
+   ≤ 0.24 m.** Known flaw, visible in the logs: alpha only grows once the
+   car is already at the corner, so braking happens late — at higher V_MAX
+   this will run wide. The real Step-3 planner fixes this by reading track
+   curvature *ahead* of the car instead of reacting to the present.
+
+These become Steps 2/3/5 properly: split into nodes, arbiter enforcing
+min(), parameters in config files, logging to CSV.
+
 *Next entries will be added when each step's code lands.*
