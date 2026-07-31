@@ -8,5 +8,6 @@ catkin_package()
 catkin_install_python(
   PROGRAMS
     scripts/waypoint_manager.py
+    scripts/sign_detector.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

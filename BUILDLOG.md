@@ -15,7 +15,7 @@ Status legend: 🔲 planned · 🚧 in progress · ✅ done
 | 1 | Waypoint manager: nearest waypoint, progress, lap counter | Reliable completion + lap counting (20%) | ✅ |
 | 2 | Pure Pursuit path follower | Path following (20%) | 🔲 |
 | 3 | Curvature-aware speed planner | Speed control (part of 20%) | 🔲 |
-| 4 | ArUco sign detector + speed-zone state | Vision (17%) | 🔲 |
+| 4 | ArUco sign detector + speed-zone state | Vision (17%) | ✅ |
 | 5 | LiDAR safety: clearance speed limit, e-stop, avoidance | LiDAR safety (18%) | 🔲 |
 | 6 | Command arbiter (min-speed rule) + recovery FSM | Recovery (10%) | 🔲 |
 | 7 | CSV logger + plot generation | Analysis & reproducibility (10%) | 🔲 |
@@ -128,3 +128,46 @@ These become Steps 2/3/5 properly: split into nodes, arbiter enforcing
 min(), parameters in config files, logging to CSV.
 
 *Next entries will be added when each step's code lands.*
+
+**Build order note:** steps are being done in dependency order, not list
+order: 1 → 4 → 5 → (2+3+6 together: formalize follower + curvature planner
++ arbiter) → 7. Reason: the arbiter's `min(v_curve, v_sign, v_lidar)`
+defines how the follower must be restructured, so the two cap producers
+(signs, LiDAR) land first and the restructuring happens exactly once. The
+sandbox follower stands in for Steps 2–3 until then.
+
+## Step 4 — ArUco sign detector ✅ (race_stack/scripts/sign_detector.py)
+
+**What.** Reads `/camera/front/image_raw`, detects DICT_4X4_50 markers with
+OpenCV, and maintains the *active speed sign*. Publishes latched
+`/race/active_sign` (10/20/30, −1 before any sign) and
+`/race/sign_speed_cap` (1.0/1.8/2.5 m/s; default 1.8 before any sign).
+
+**Design decisions (the vision requirements in the handout):**
+- *Temporal confirmation:* a marker must appear in 3 consecutive frames to
+  become active — a single-frame glitch can never flip the speed zone.
+- *Latching:* the active sign persists after the board leaves view, until a
+  different sign is confirmed (per the rules).
+- *Largest-marker-wins:* if two signs are visible, the nearer (bigger in
+  pixels) one is taken; markers under 400 px² are ignored as too far.
+- No cv_bridge: raw `Image.data` → numpy reshape (bgr8), one less
+  dependency.
+
+**Verified:** with the sandbox follower lapping the development layout, the
+log shows `20 → 30 → 20 → 30` (NORMAL and BOOST confirmed every lap, caps
+1.8/2.5 correct, latch holding in between). Detector confirmed ID 10 in
+<3 frames when the car was parked facing the SLOW board.
+
+**Known issue (dev layout):** the SLOW sign at (24.4, 7.5) never enters
+frontal view from the racing line — it sits ~90° off the camera axis as
+the car passes. Verified it *detects* when in view, so this is sign
+placement/sightline, not detection. A 90° FOV camera was tried and
+reverted: fewer pixels per degree lost the BOOST sign without gaining
+SLOW. Watch for this in evaluation layouts; if a required sign is
+missed, the first knob is camera resolution, not FOV.
+
+**Run it:**
+```bash
+rosrun race_stack sign_detector.py
+rostopic echo /race/active_sign     # -1, then 20/30/10 as boards are passed
+```

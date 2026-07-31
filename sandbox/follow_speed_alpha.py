@@ -18,9 +18,9 @@ WHEELBASE = 0.33
 MAX_STEER = 0.34
 
 # --- speed law parameters (your idea) ---
-V_MAX = 2.0     # on a dead-straight
+V_MAX = 3.0     # on a dead-straight
 V_MIN = 0.8     # floor so it never stalls mid-corner
-K_ALPHA = 4.0   # how aggressively alpha reduces speed
+K_ALPHA = 2.0   # how aggressively alpha reduces speed
 
 
 class PurePursuit:

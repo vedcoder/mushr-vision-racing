@@ -27,6 +27,8 @@ BOARD_BASE_HEIGHT = 0.10  # bottom edge height above ground
 
 # Camera intrinsics/pose on the car
 IMG_W, IMG_H = 640, 480
+# 70 deg keeps enough px/deg for oblique boards; 90 was tried and lost the
+# BOOST sign (fewer px per degree) without gaining SLOW (~90 deg off-axis).
 FOV_X = math.radians(70.0)
 FX = (IMG_W / 2) / math.tan(FOV_X / 2)
 FY = FX
