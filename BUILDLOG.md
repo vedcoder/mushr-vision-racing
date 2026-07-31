@@ -12,7 +12,7 @@ Status legend: 🔲 planned · 🚧 in progress · ✅ done
 
 | Step | What | Rubric weight it targets | Status |
 |---|---|---|---|
-| 1 | Waypoint manager: nearest waypoint, progress, lap counter | Reliable completion + lap counting (20%) | 🔲 |
+| 1 | Waypoint manager: nearest waypoint, progress, lap counter | Reliable completion + lap counting (20%) | ✅ |
 | 2 | Pure Pursuit path follower | Path following (20%) | 🔲 |
 | 3 | Curvature-aware speed planner | Speed control (part of 20%) | 🔲 |
 | 4 | ArUco sign detector + speed-zone state | Vision (17%) | 🔲 |
@@ -43,7 +43,27 @@ deterministic.
 
 ---
 
-## Step 1 — Waypoint manager (planned)
+## Step 1 — Waypoint manager ✅ (implemented in race_stack/)
+
+**Landed as designed below, plus one addition:** the node also publishes
+the centerline as a latched `visualization_msgs/Marker` on
+`/race/waypoints_viz` — enable it in Foxglove's 3D panel to see the yellow
+line the car follows. Package skeleton: `race_stack/` at the repo root,
+symlinked into the container workspace (`ln -s /assignment/race_stack
+/root/catkin_ws/src/race_stack`, then `catkin build race_stack` once).
+
+**Verified:** with the sandbox Pure Pursuit follower driving,
+`/race/lap_count` went 0 → 1 exactly at the finish line, 68 s after the
+start — and nudging across the line back/forward does not inflate the
+count (hysteresis working).
+
+**Run it:**
+```bash
+rosrun race_stack waypoint_manager.py
+rostopic echo /race/progress_m      # watch progress climb as the car drives
+```
+
+### Original design (for reference)
 
 **What.** A node that loads `track/centerline_waypoints.csv` (337 points:
 id, x, y, yaw), listens to odometry, and continuously publishes: the index
