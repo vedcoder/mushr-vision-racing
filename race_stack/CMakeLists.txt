@@ -9,5 +9,6 @@ catkin_install_python(
   PROGRAMS
     scripts/waypoint_manager.py
     scripts/sign_detector.py
+    scripts/lidar_safety.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

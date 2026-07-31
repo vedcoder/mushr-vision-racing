@@ -33,11 +33,17 @@ class PurePursuit:
         self.pose = None
         self.nearest = 0
         self.sign_cap = 1.8   # NORMAL rules until the detector says otherwise
+        self.lidar_cap = 99.0
+        self.dodge = 0.0
         self.pub = rospy.Publisher("/car/mux/ackermann_cmd_mux/input/navigation",
                                    AckermannDriveStamped, queue_size=1)
         rospy.Subscriber("/mushr_sim/car/odom", Odometry, self.on_odom, queue_size=1)
         rospy.Subscriber("/race/sign_speed_cap", Float32,
                          lambda m: setattr(self, "sign_cap", m.data), queue_size=1)
+        rospy.Subscriber("/race/lidar_speed_cap", Float32,
+                         lambda m: setattr(self, "lidar_cap", m.data), queue_size=1)
+        rospy.Subscriber("/race/dodge_steer", Float32,
+                         lambda m: setattr(self, "dodge", m.data), queue_size=1)
         rospy.loginfo("loaded %d waypoints", self.n)
 
     def on_odom(self, msg):
@@ -72,12 +78,14 @@ class PurePursuit:
             dist = math.hypot(fwd, left)
 
             steer = math.atan(2 * WHEELBASE * math.sin(alpha) / dist)
+            steer += self.dodge                 # safety bias toward free space
             steer = max(-MAX_STEER, min(MAX_STEER, steer))
 
             # ======= YOUR SPEED LAW: alpha small -> fast, alpha big -> slow =======
             speed = V_MAX / (1.0 + K_ALPHA * abs(alpha))
             speed = max(V_MIN, min(V_MAX, speed))
-            speed = min(speed, self.sign_cap)   # sign zone is a hard ceiling
+            # the assignment's rule: most cautious opinion wins
+            speed = min(speed, self.sign_cap, self.lidar_cap)
             # ======================================================================
 
             msg = AckermannDriveStamped()

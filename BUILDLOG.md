@@ -16,7 +16,7 @@ Status legend: 🔲 planned · 🚧 in progress · ✅ done
 | 2 | Pure Pursuit path follower | Path following (20%) | 🔲 |
 | 3 | Curvature-aware speed planner | Speed control (part of 20%) | 🔲 |
 | 4 | ArUco sign detector + speed-zone state | Vision (17%) | ✅ |
-| 5 | LiDAR safety: clearance speed limit, e-stop, avoidance | LiDAR safety (18%) | 🔲 |
+| 5 | LiDAR safety: clearance speed limit, e-stop, avoidance | LiDAR safety (18%) | ✅ |
 | 6 | Command arbiter (min-speed rule) + recovery FSM | Recovery (10%) | 🔲 |
 | 7 | CSV logger + plot generation | Analysis & reproducibility (10%) | 🔲 |
 
@@ -170,4 +170,37 @@ missed, the first knob is camera resolution, not FOV.
 ```bash
 rosrun race_stack sign_detector.py
 rostopic echo /race/active_sign     # -1, then 20/30/10 as boards are passed
+```
+
+## Step 5 — LiDAR safety ✅ (race_stack/scripts/lidar_safety.py)
+
+**What.** One 360° scan → three numbers (robust clearance in a ±7° centre
+cone and 11–40° left/right windows) → two outputs: `/race/lidar_speed_cap`
+(linear ramp: no limit above 2.5 m clearance, zero at 0.45 m — the e-stop
+is the bottom of the ramp, not a separate mode) and `/race/dodge_steer`
+(bias toward the freer side, scaled by urgency, max 0.2 rad so Pure
+Pursuit can always out-vote it and pull back to the line).
+
+**Design notes for the report:**
+- Every clearance is a 10th-percentile, never a raw min — the sim's laser
+  noise produces phantom single-ray shorts (see sandbox notes).
+- STOP=0.45 m justified by car length + laser offset + worst-case one-tick
+  travel at 2.5 m/s. FREE=2.5 m gives gentle braking from top legal speed.
+- Centre cone was ±11° initially; on this 2.3 m-wide track it grazed the
+  walls and bound the cap at ~1.9 on open straights. Fixed at ±7° —
+  measured, not guessed (both log excerpts kept for the report).
+- Geometry fact found while testing: the corner barrel intrudes on the
+  centerline (line passes 0.36 m from its centre, r=0.28, car half-width
+  0.14 — negative margin). It is the real dodge test case, near wp 125.
+
+**Verified:** full autonomous lap on track_development with follower +
+signs + safety all active: lap counted, cap quiet except 28 events, dodge
+fired with correct direction at obstacle encounters (e.g. centre 0.97 m,
+right 0.90 m → bias +0.11 left; caps dipped to 0.40–0.64 during
+encounters), car resumed racing after each.
+
+**Run it:**
+```bash
+rosrun race_stack lidar_safety.py
+rostopic echo /race/lidar_speed_cap
 ```
