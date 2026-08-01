@@ -18,6 +18,17 @@ fi
 
 MAP_NAME=${1:-track_development}
 LAYOUT=${2:-development}
+
+# Auto-apply the numpy compatibility patches (idempotent). Fresh containers
+# without them lose the sim core + TF chain; skipping this step manually
+# has cost the team two debugging evenings.
+cp /assignment/sim/patches/racecar_state.py \
+   /root/catkin_ws/src/mushr/mushr_base/mushr_base/src/mushr_base/racecar_state.py
+cp /assignment/sim/patches/fake_urg.py \
+   /root/catkin_ws/src/mushr_sim/src/mushr_sim/fake_urg.py
+cp /assignment/sim/patches/mushr_sim.py \
+   /root/catkin_ws/src/mushr_sim/src/mushr_sim/mushr_sim.py
+echo "numpy patches applied"
 export MAP=/assignment/sim/maps/${MAP_NAME}.yaml
 if [ ! -f "$MAP" ]; then
   echo "Baking obstacle map variants..."
