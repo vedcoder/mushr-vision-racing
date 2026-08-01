@@ -214,7 +214,7 @@ rostopic echo /race/lidar_speed_cap
 | Barrel head-on with full stack | **PASS** — dodge +0.11 with cap 0.62 at the barrel, then threaded the gate pair, no contact |
 | Evaluation A (unseen map + signs) | **PASS** — 2+ laps, 5 sign confirmations, 7 dodges, no contact |
 | Evaluation B | **SAFE-DEADLOCK** — box_B1 sits 0.09 m off centerline (wp 294): e-stop prevented collision (4 cm final clearance, zero contact) but car froze forever: Pure Pursuit (0.34 rad authority) out-votes the dodge (0.2 by design) and keeps aiming through the box. Root cause understood; fix = recovery FSM + reducing PP authority while dodge urgency is high (planned Step 6). |
-| Evaluation C | **INCONCLUSIVE** — environment failure, not stack: Docker degraded mid-run (control loop starved from 20 Hz to ~0.03 Hz, 45 log lines in 6 min). Rerun after Docker restart. Also observed: only SLOW confirmed → whole run legally capped at 1.0; sign sightlines per layout matter. |
+| Evaluation C | **PASS** (on rerun with healthy Docker) — 2+ laps, no contact, no stall; 160 control-loop log lines vs 45 in the first attempt, confirming the original failure was Docker starving the sim, not the stack. Only SLOW is sightline-visible in this layout → run legally capped at 1.0 m/s (78 s laps). |
 
 **Lesson worth presenting:** the failures found are architectural, not
 bugs — a bounded dodge *cannot* beat the path follower for obstacles dead
