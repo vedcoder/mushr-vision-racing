@@ -59,6 +59,19 @@ cd sim && docker compose stop                   # stop container (state kept)
 # optionally quit Docker Desktop and Foxglove
 ```
 
+## Live demo: forced recovery (the showpiece)
+
+With the stack running on `track_development`, teleport the car 30 cm
+from the box on the straight — it e-stops, waits 2 s, reverses with a
+nose-swing, dodges around, and resumes racing on its own:
+
+```bash
+docker exec mushr_sim bash -c 'source /opt/ros/noetic/setup.bash; rostopic pub -1 /mushr_sim/reposition geometry_msgs/PoseStamped "{header: {frame_id: map}, pose: {position: {x: 12.6, y: 3.65}, orientation: {w: 1.0}}}"'
+```
+
+Narrate from `rostopic echo /race/state` in a second terminal:
+RACING → REVERSING → RACING.
+
 ## Useful live checks
 
 ```bash
