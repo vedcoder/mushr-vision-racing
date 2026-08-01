@@ -1,98 +1,95 @@
-# MuSHR Vision-Aware Autonomous Racing — Team Repo
+# MuSHR Vision-Aware Autonomous Racing
 
-Our team's stack for the 5-day MuSHR Vision-Aware Autonomous Racing
-Challenge: an autonomous racing system that must complete three consecutive
-laps, brake for corners, avoid LiDAR-visible obstacles, read ArUco speed
-signs from a forward camera, and recover from failures — all in simulation.
+Team stack for the 5-day MuSHR racing challenge: a six-node ROS 1 system
+that completes **3 consecutive autonomous laps (best flying lap 46.5 s,
+zero collisions)**, brakes for corners it hasn't reached yet, reads ArUco
+speed signs from a camera, dodges LiDAR-visible obstacles, and reverses
+itself out of deadlocks — all verified on four track configurations with
+logged evidence.
 
-The full student handout is in
-[`docs/mushr_vision_racing_assignment.pdf`](docs/mushr_vision_racing_assignment.pdf).
+![speed vs caps](docs/figures/finalDev_speed_caps.png)
+*The whole system in one picture: commanded speed (blue) riding
+`min(curvature cap, sign cap, LiDAR cap)` across three laps. Green steps =
+speed-limit signs read live from the camera; red spikes = obstacles.*
 
-## Why this setup (decisions & rationale)
+## Results (official logged runs)
 
-**ROS 1 Noetic + the official MuSHR simulator, not ROS 2/Gazebo/TurtleBot3.**
-The assignment requires an Ackermann (car-like) vehicle and names MuSHR as
-the platform. TurtleBot3 is differential-drive — using it would mean 1–2
-days of Gazebo work to build a car model before any graded work starts.
-The official MuSHR sim gives us the correct vehicle, LiDAR, and drive
-interface out of the box, so all of our ~100 team-hours go into the parts
-the rubric actually scores (control 20%, LiDAR safety 18%, vision 17%, …).
-ROS 1 code cannot be mixed with ROS 2 code, so this choice is binding for
-the whole team.
+| Map | Laps | Best flying lap | Collisions |
+|---|---|---|---|
+| Development | 3 | **46.5 s** (46.6 s repeat) | 0 |
+| Evaluation A (unseen) | 2+ | 63.2 s — 60% of run in SLOW zones | 0 |
+| Evaluation B (unseen, obstacle on racing line) | 2+ | 68.6 s | 0 |
+| Evaluation C (unseen) | 2+ | 80.9 s | 0 |
 
-**Docker, because ROS 1 needs Ubuntu 20.04.** ROS Noetic does not run
-natively on macOS/Windows. Docker is also MuSHR's officially supported
-install path. The container (`mushr/mushr:x86_64`) runs under Rosetta on
-Apple Silicon; it has been verified end-to-end on an M-series Mac (LiDAR at
-10 Hz, ground-truth odom at 20 Hz, drive commands moving the car).
+Sign detection: 2/2 confirmations per lap with 0 false transitions —
+including under darkening (−70 brightness) and 7 px Gaussian blur.
 
-**Foxglove Studio instead of RViz.** No X11 forwarding headaches on
-macOS/Windows: the sim exposes rosbridge on `ws://localhost:9090` and
-Foxglove (native desktop app) renders the map, scans, camera, and teleop.
+More figures in [docs/figures/](docs/figures/): speed profile, tracking
+error (≤0.24 m), obstacle clearance.
 
-**Obstacles are baked into map variants.** The sim's LiDAR raycasts against
-the occupancy grid, so `sim/scripts/bake_obstacle_maps.py` rasterizes each
-obstacle set from `config/obstacle_sets.yaml` into its own map
-(`track_clean`, `track_development`, `track_evaluation_A/B/C`). This
-guarantees obstacles are LiDAR-visible, as the handout requires.
+## How it works (short version)
 
-**The camera is synthetic.** Stock mushr_sim has no RGB camera; the handout
-explicitly expects an instructor/team adapter here.
-`sim/scripts/sign_camera_sim.py` renders the real ArUco board textures from
-`signs/` at the poses in `config/vision_sign_layouts.yaml` with a proper
-homography (pinhole) projection, and publishes
-`/camera/front/image_raw` at ~15 Hz. Detection difficulty scales
-realistically with distance and viewing angle, so an OpenCV ArUco pipeline
-behaves like it would on a real feed.
+Six nodes, one rule — **everyone publishes opinions, only the arbiter
+drives**: Pure Pursuit proposes steering; a curvature planner, the sign
+detector, and the LiDAR safety node each propose a speed ceiling; the
+arbiter commands `v = min(all three)` with rate limits, blends in the
+obstacle-dodge by urgency, and runs the stuck→reverse→resume recovery
+state machine. Full explainer with design rationale:
+[submission_docs/ARCHITECTURE.md](submission_docs/ARCHITECTURE.md).
 
-**Upstream numpy patches.** The MuSHR sim source predates numpy 1.24 and
-uses the removed `np.float`/`np.int` aliases; the LiDAR node
-(`fake_urg.py`, `mushr_sim.py`) and the state publisher
-(`racecar_state.py`, patched copy in `sim/patches/`) crash without the
-one-word fixes (`np.float` → `float`). These are simulator bug-fixes only —
-no assignment logic lives there.
+## Documents
+
+| Doc | What's in it |
+|---|---|
+| [submission_docs/REPORT.md](submission_docs/REPORT.md) | The ≤5-page submission report |
+| [submission_docs/ARCHITECTURE.md](submission_docs/ARCHITECTURE.md) | System explainer + all figures |
+| [submission_docs/BUILDLOG.md](submission_docs/BUILDLOG.md) | Step-by-step engineering log: every design decision, measurement, and war story |
+| [submission_docs/RUNBOOK.md](submission_docs/RUNBOOK.md) | Exact commands: start, stop, demos, health check |
 
 ## Quickstart
 
 Prereqs: Docker Desktop, [Foxglove Studio](https://foxglove.dev/download).
 
 ```bash
-cd sim
-docker compose up -d
+cd sim && docker compose up -d
 
-# first time only: build the workspace and apply the numpy patches
+# first time only: build the workspace (~1 min)
 docker exec mushr_sim bash -c 'source /opt/ros/noetic/setup.bash && cd /root/catkin_ws && catkin build'
-docker cp patches/racecar_state.py mushr_sim:/root/catkin_ws/src/mushr/mushr_base/mushr_base/src/mushr_base/racecar_state.py
-# (fake_urg.py / mushr_sim.py need the same np.float->float, np.int->int edits)
 
-# start the sim on the development layout
+# start the simulator (applies compatibility patches automatically,
+# refuses to double-start)
 docker exec -d mushr_sim bash /assignment/sim/scripts/start_sim.sh track_development development
+
+# ALWAYS: 10-second drivetrain health check before trusting a run
+# (command in RUNBOOK.md — car must physically move)
+
+# launch the racing stack (all six nodes + logger)
+docker exec -d mushr_sim bash -c 'source /opt/ros/noetic/setup.bash && source /root/catkin_ws/devel/setup.bash && roslaunch race_stack race.launch run_name:=myrun'
 ```
 
-Then open Foxglove → Open connection → **Rosbridge (ROS 1 & 2)** →
-`ws://localhost:9090`. See [`sim/README.md`](sim/README.md) for panels,
-teleop, teleporting the car, and all day-to-day commands.
-
-## Topic contract
-
-| Topic | Type | Direction |
-|---|---|---|
-| `/car/scan` | `sensor_msgs/LaserScan` | in (10 Hz) |
-| `/camera/front/image_raw` | `sensor_msgs/Image` | in (~15 Hz) |
-| `/car/odom`, `/mushr_sim/car/odom` | `nav_msgs/Odometry` | in |
-| `/car/mux/ackermann_cmd_mux/input/navigation` | `AckermannDriveStamped` | **out (our controller)** |
+Watch in Foxglove: Open connection → **Rosbridge** → `ws://localhost:9090`.
+Every run writes a 20 Hz CSV to `logs/`; turn it into plots + lap times
+with `python3 race_stack/scripts/make_plots.py logs/<run>.csv`.
 
 ## Repo layout
 
 | Path | What it is |
 |---|---|
-| `docs/` | Assignment handout (PDF + LaTeX source) |
-| `track/` | Occupancy-grid map, centerline waypoints, preview (instructor-provided) |
-| `config/` | Obstacle sets, sign layouts, track sectors (instructor-provided) |
-| `signs/` | ArUco sign-board textures (instructor-provided) |
-| `scripts/` | Instructor asset generator |
-| `sim/` | Our simulation environment: Docker setup, launch scripts, camera sim, map baking, patches |
+| `race_stack/` | The racing stack: 7 nodes, launch file, `config/params.yaml` |
+| `submission_docs/` | Report, architecture, build log, runbook |
+| `results/` | CSVs of the official runs behind the results table |
+| `docs/figures/` | Report/slide figures · `docs/` also holds the assignment handout |
+| `testing/` | The prototypes that came first (drive straight → stop at wall → Pure Pursuit → speed laws) — the try-it-small trail the BUILDLOG narrates |
+| `sim/` | Simulation environment: Docker setup, sim launcher, synthetic sign camera, obstacle-map baking, upstream patches |
+| `track/`, `config/`, `signs/` | Instructor-provided assets (unmodified) |
 
-Instructor-provided assets are unmodified. Team-authored code lives (and
-will grow) under `sim/` and, soon, our ROS package(s) for control, vision,
-safety, and recovery.
+## Why this setup (the short answer)
+
+ROS 1 Noetic + the official MuSHR simulator in Docker: the assignment
+requires an Ackermann vehicle and names MuSHR; the official sim provides
+the correct car, LiDAR, and drive interface out of the box, so all our
+time went into the graded work. The camera is synthetic (stock mushr_sim
+has none): it renders the real ArUco board textures with true perspective
+projection, so OpenCV detection behaves realistically — the handout
+explicitly expects such an adapter. Obstacles are baked into map variants
+so LiDAR genuinely sees them. Full rationale in the ARCHITECTURE doc.
