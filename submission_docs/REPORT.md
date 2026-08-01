@@ -3,7 +3,7 @@
 *Team mushr-vision-racing · repository:
 github.com/vedcoder/mushr-vision-racing · August 2026*
 
-*(≤5 pages when exported. Figures: `docs/figures/`. Reproduction:
+*(≤5 pages when exported. Figures: `../docs/figures/`. Reproduction:
 `README.md` + `RUNBOOK.md`. Per-step engineering log: `BUILDLOG.md`.)*
 
 ## 1. System overview

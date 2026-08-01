@@ -2,7 +2,7 @@
 
 The single document to read before the presentation: how the stack works,
 why it's designed this way, the measured results, and the figures (in
-`docs/figures/`, drag them straight into slides). Deep dives per step live
+`../docs/figures/`, drag them straight into slides). Deep dives per step live
 in [BUILDLOG.md](BUILDLOG.md); run commands in [RUNBOOK.md](RUNBOOK.md).
 
 ## The architecture in one picture
@@ -121,32 +121,32 @@ the case study for why logging is part of the stack, not an afterthought.
 | Brightness −70 | 2/2 | 0 |
 | Gaussian blur 7 px | 2/2 | 0 |
 
-## Figures (docs/figures/ — use these in the slides)
+## Figures (../docs/figures/ — use these in the slides)
 
 **The arbiter picture** — commanded speed hugging min(curve, sign,
 lidar); green sign-cap steps are BOOST zones, red spikes are obstacles:
 
-![speed vs caps](docs/figures/finalDev_speed_caps.png)
+![speed vs caps](../docs/figures/finalDev_speed_caps.png)
 
 **Speed profile by track position** (all laps overlaid — repeatability is
 the tight vertical spread):
 
-![speed profile](docs/figures/finalDev_speed_profile.png)
+![speed profile](../docs/figures/finalDev_speed_profile.png)
 
 **Tracking error around the track** (Pure Pursuit quality; peaks are
 corner apexes and the dodge around the barrel):
 
-![tracking error](docs/figures/finalDev_tracking_error.png)
+![tracking error](../docs/figures/finalDev_tracking_error.png)
 
 **Obstacle clearance over time** (min LiDAR return; the periodic dips are
 the barrel/gate passes — never below the 0.45 m stop threshold):
 
-![clearance](docs/figures/finalDev_clearance.png)
+![clearance](../docs/figures/finalDev_clearance.png)
 
 **Evaluation A: racing by the rules** — long 1.0 m/s plateaus are SLOW
 zones read from the track, not hard-coded:
 
-![eval A speed caps](docs/figures/finalA_speed_caps.png)
+![eval A speed caps](../docs/figures/finalA_speed_caps.png)
 
 ## The three Q&A stories
 
