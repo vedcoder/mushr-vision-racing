@@ -161,4 +161,21 @@ pre-run drivetrain health check.
 
 ## Appendix A — team contributions
 
-*(To be completed by the team before submission.)*
+*(Fill each entry honestly and specifically — "worked on vision" is weak;
+"tuned the sign detector's confirmation threshold and ran the perturbation
+tests" is strong. Delete these instructions before submitting.)*
+
+- **Vidit Gupta:** *(e.g., environment bring-up and simulator debugging;
+  control-law experimentation and tuning across V_MAX/K_ALPHA sweeps;
+  all official runs, testing campaign, video production; …)*
+- **Amogh Saagar:** *(e.g., WSL/Foxglove setup and cross-platform
+  debugging that led to the auto-patching and double-start guards; …)*
+- **Rajdip Kundu:** *(e.g., independent Docker/ROS environment
+  evaluation that informed the stack choice; …)*
+- **Varchas Jasti:** *(…)*
+
+**Tools disclosure:** development was pair-programmed with an AI coding
+assistant (Claude); all design decisions, parameter choices, and test
+campaigns were reviewed, driven, and verified by the team. (Check the
+course's AI policy and phrase per its requirements — the repository's
+commit history transparently records the assistant as co-author.)
