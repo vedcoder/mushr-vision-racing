@@ -1,0 +1,19 @@
+# Central tuning file for the race stack. Values proven in sandbox testing
+# (multiple clean laps at V_MAX 3.0 before sign caps applied).
+path_follower:
+  lookahead: 1.2        # carrot distance (m)
+  wheelbase: 0.33       # MuSHR axle-to-axle (m), from URDF
+  max_steer: 0.34       # servo limit (rad)
+
+speed_planner:
+  v_max: 2.5            # highest legal race speed (BOOST cap)
+  v_min: 0.7            # planner floor (LiDAR may still command 0)
+  k_kappa: 1.6          # curvature aggressiveness: v = v_max/(1+k*|kappa|)
+  brake_lookahead_m: 3.0  # brake for the worst curvature this far ahead
+
+arbiter:
+  accel_limit: 1.5      # m/s^2 max speed-up rate
+  decel_limit: 3.0      # m/s^2 max slow-down rate
+  stuck_seconds: 2.0    # commanded>0 but not moving this long -> STUCK
+  reverse_seconds: 1.8  # how long to back up in recovery
+  reverse_speed: 0.6    # m/s while reversing

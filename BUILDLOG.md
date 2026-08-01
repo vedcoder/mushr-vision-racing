@@ -13,11 +13,11 @@ Status legend: 🔲 planned · 🚧 in progress · ✅ done
 | Step | What | Rubric weight it targets | Status |
 |---|---|---|---|
 | 1 | Waypoint manager: nearest waypoint, progress, lap counter | Reliable completion + lap counting (20%) | ✅ |
-| 2 | Pure Pursuit path follower | Path following (20%) | 🔲 |
-| 3 | Curvature-aware speed planner | Speed control (part of 20%) | 🔲 |
+| 2 | Pure Pursuit path follower | Path following (20%) | ✅ |
+| 3 | Curvature-aware speed planner | Speed control (part of 20%) | ✅ |
 | 4 | ArUco sign detector + speed-zone state | Vision (17%) | ✅ |
 | 5 | LiDAR safety: clearance speed limit, e-stop, avoidance | LiDAR safety (18%) | ✅ |
-| 6 | Command arbiter (min-speed rule) + recovery FSM | Recovery (10%) | 🔲 |
+| 6 | Command arbiter (min-speed rule) + recovery FSM | Recovery (10%) | ✅ |
 | 7 | CSV logger + plot generation | Analysis & reproducibility (10%) | 🔲 |
 
 All code will live in a single catkin package, `race_stack/`, at the repo
@@ -215,6 +215,37 @@ rostopic echo /race/lidar_speed_cap
 | Evaluation A (unseen map + signs) | **PASS** — 2+ laps, 5 sign confirmations, 7 dodges, no contact |
 | Evaluation B | **SAFE-DEADLOCK** — box_B1 sits 0.09 m off centerline (wp 294): e-stop prevented collision (4 cm final clearance, zero contact) but car froze forever: Pure Pursuit (0.34 rad authority) out-votes the dodge (0.2 by design) and keeps aiming through the box. Root cause understood; fix = recovery FSM + reducing PP authority while dodge urgency is high (planned Step 6). |
 | Evaluation C | **PASS** (on rerun with healthy Docker) — 2+ laps, no contact, no stall; 160 control-loop log lines vs 45 in the first attempt, confirming the original failure was Docker starving the sim, not the stack. Only SLOW is sightline-visible in this layout → run legally capped at 1.0 m/s (78 s laps). |
+
+## Steps 2+3+6 — formalization: follower, planner, arbiter ✅
+
+The sandbox retires. Six nodes, one launch file
+(`roslaunch race_stack race.launch`), tuning in `config/params.yaml`:
+
+- **path_follower.py (Step 2):** Pure Pursuit, steering opinion only on
+  `/race/pp_steer`. Parameters from the config, not constants.
+- **speed_planner.py (Step 3):** curvature from the CSV's own headings
+  (kappa = yaw change per metre), the handout's law
+  v = v_max/(1+k|kappa|), and a 3 m brake-ahead window (cap at wp i =
+  min allowed speed over the next 3 m) — fixes the reactive alpha law's
+  measured late-braking flaw. All precomputed; runtime is a lookup.
+- **arbiter.py (Step 6):** the only node that drives.
+  v = min(curve, sign, lidar) with accel/decel rate limiting;
+  steering = (1-u)·pp + sign(dodge)·u·max_steer where u = dodge urgency —
+  at full urgency the dodge has FULL authority (the evaluation-B fix).
+  Recovery FSM: RACING → REVERSING (back out, nose toward free space) →
+  RACING, published on `/race/state`.
+
+**Verified:**
+- Dev map, full stack via race.launch: 2 laps in 150 s, no contact.
+- Evaluation B (the old deadlock): **2 laps, zero recoveries needed** —
+  the urgency blend steers around the on-line box on its own.
+- Forced deadlock (teleported nose-to-box, e-stop pinned): stuck detector
+  fired at 2 s, `RACING → REVERSING → RACING`, car backed out, dodged the
+  box, completed the lap.
+- **Bug found by testing:** the stuck detector originally required
+  cmd_v > 0.1, but a full e-stop sets cmd_v = 0 — recovery was unreachable
+  in exactly the deepest deadlock. Fixed: also trigger when the lidar cap
+  pins the car (< 0.3). Kept here because it's a good war story.
 
 **Lesson worth presenting:** the failures found are architectural, not
 bugs — a bounded dodge *cannot* beat the path follower for obstacles dead
