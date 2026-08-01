@@ -1,0 +1,79 @@
+# Runbook — exact commands to start, run, and stop everything
+
+Copy-paste ready. All `docker exec` commands work from any Mac/WSL
+terminal in this repo. During the presentation, keep this file open.
+
+## Cold start (laptop just booted) — ~2 min
+
+```bash
+open -a Docker                # macOS; on Windows start Docker Desktop
+# wait until Docker Desktop says "running" (whale icon steady)
+
+cd sim
+docker compose up -d          # start (or recreate) the container
+
+# start the simulator on the development track + sign layout
+docker exec -d mushr_sim bash /assignment/sim/scripts/start_sim.sh track_development development
+
+# start our racing stack (all 6 nodes)
+docker exec -d mushr_sim bash -c 'source /opt/ros/noetic/setup.bash && source /root/catkin_ws/devel/setup.bash && roslaunch race_stack race.launch'
+```
+
+Then open Foxglove Studio → Open connection → **Rosbridge (ROS 1 & 2)** →
+`ws://localhost:9090`.
+
+The car starts driving as soon as the stack is up (arbiter commands
+immediately). To hold it still until you're ready, start the stack only
+when asked to "make it go".
+
+## Put the car on the start line
+
+```bash
+docker exec mushr_sim bash -c 'source /opt/ros/noetic/setup.bash; rostopic pub -1 /mushr_sim/reposition geometry_msgs/PoseStamped "{header: {frame_id: map}, pose: {position: {x: 3.4, y: 4.0}, orientation: {w: 1.0}}}"'
+```
+
+## Stop / start JUST the racing stack (car halts ~0.2 s after stop)
+
+```bash
+docker exec mushr_sim pkill -f race.launch      # stop our 6 nodes
+# restart:
+docker exec -d mushr_sim bash -c 'source /opt/ros/noetic/setup.bash && source /root/catkin_ws/devel/setup.bash && roslaunch race_stack race.launch'
+```
+
+## Switch maps (e.g. to an evaluation set)
+
+```bash
+docker exec mushr_sim pkill -f ros; sleep 3
+docker exec -d mushr_sim bash /assignment/sim/scripts/start_sim.sh track_evaluation_A evaluation_A
+# wait ~20 s, then restart the racing stack (command above)
+```
+
+Maps: `track_clean`, `track_development`, `track_evaluation_A/B/C` with
+sign layouts `development`, `evaluation_A/B/C`.
+
+## Full shutdown
+
+```bash
+docker exec mushr_sim pkill -f ros              # stop all ROS processes
+cd sim && docker compose stop                   # stop container (state kept)
+# optionally quit Docker Desktop and Foxglove
+```
+
+## Useful live checks
+
+```bash
+# inside `docker exec -it mushr_sim bash` (ROS env auto-loads):
+rostopic echo /race/lap_count      # laps
+rostopic echo /race/state          # RACING / REVERSING
+rostopic echo /race/active_sign    # current speed-zone sign
+rostopic list | grep /race/        # all our topics (should be 10)
+```
+
+## If something is wedged
+
+- Foxglove won't connect → is rosbridge up? `nc -z localhost 9090`.
+  Rosbridge starts with the sim, not the stack.
+- Sim slow / laps crawling → Docker Desktop degraded: quit Docker fully,
+  relaunch, cold-start again (known issue, documented in BUILDLOG).
+- Container name conflict on `compose up` → `docker rm -f mushr_sim`,
+  retry.
