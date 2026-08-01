@@ -34,7 +34,10 @@ CENTER_HALF = 0.12
 SIDE_IN = 0.20       # side windows: 0.20..0.70 rad (~11..40 deg) each side
 SIDE_OUT = 0.70
 
-DODGE_TRIGGER = 1.6  # start dodging when centre clearance drops below this
+# 2.2: probe data showed the car crawling ~40 s/lap behind the on-line
+# barrel with a late (1.6) trigger — dodging earlier lets it offset around
+# the obstacle before the speed cap bites, and the cap releases sooner.
+DODGE_TRIGGER = 2.2
 DODGE_MAX = 0.20     # max steering bias (rad) — never exceeds servo range
 PERCENTILE = 10      # robust clearance = this percentile of the window
 
