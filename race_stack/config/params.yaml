@@ -8,13 +8,13 @@ path_follower:
 speed_planner:
   v_max: 2.5            # highest legal race speed (BOOST cap)
   v_min: 0.9            # planner floor (LiDAR may still command 0)
-  k_kappa: 1.0          # curvature aggressiveness: v = v_max/(1+k*|kappa|)
+  k_kappa: 0.8          # curvature aggressiveness: v = v_max/(1+k*|kappa|)
                         # 1.6 measured over-conservative (floor-pinned in the
                         # west complex; alpha-law laps proved ~0.95+ is safe)
   brake_lookahead_m: 3.0  # brake for the worst curvature this far ahead
 
 arbiter:
-  accel_limit: 1.5      # m/s^2 max speed-up rate
+  accel_limit: 2.5      # m/s^2 max speed-up rate
   decel_limit: 3.0      # m/s^2 max slow-down rate
   stuck_seconds: 2.0    # commanded>0 but not moving this long -> STUCK
   reverse_seconds: 1.8  # how long to back up in recovery

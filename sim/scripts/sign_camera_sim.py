@@ -56,6 +56,11 @@ class SignCameraSim:
         self.pub = rospy.Publisher("/camera/front/image_raw", Image,
                                    queue_size=1)
         odom_topic = rospy.get_param("~odom_topic", "/mushr_sim/car/odom")
+        # robustness-test perturbations (handout: demonstrate detection
+        # under at least two image degradations)
+        self.brightness = float(rospy.get_param("~brightness", 0))  # +/- offset
+        self.blur = int(rospy.get_param("~blur", 0))                # kernel px
+        self.noise = float(rospy.get_param("~noise_sigma", 0))      # gaussian
         rospy.Subscriber(odom_topic, Odometry, self.on_odom, queue_size=1)
         hz = rospy.get_param("~rate", 15.0)
         rospy.Timer(rospy.Duration(1.0 / hz), self.render)
@@ -129,6 +134,15 @@ class SignCameraSim:
             mask = cv2.warpPerspective(np.full((h, w), 255, np.uint8), H,
                                        (IMG_W, IMG_H))
             img[mask > 0] = warped[mask > 0]
+
+        if self.brightness:
+            img = cv2.convertScaleAbs(img, alpha=1.0, beta=self.brightness)
+        if self.blur >= 3:
+            k = self.blur | 1                      # kernel must be odd
+            img = cv2.GaussianBlur(img, (k, k), 0)
+        if self.noise > 0:
+            img = cv2.add(img, np.random.normal(
+                0, self.noise, img.shape).astype(np.int16), dtype=cv2.CV_8U)
 
         msg = Image()
         msg.header.stamp = rospy.Time.now()

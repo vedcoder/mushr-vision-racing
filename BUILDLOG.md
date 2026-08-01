@@ -267,6 +267,32 @@ the stack was fine and the *sim's* drivetrain was dead
 with same name"). New rule in the RUNBOOK: before any official run, do a
 2-second manual drive test; if the car doesn't move, restart the sim.
 
+## Final results (official logged runs, tuning frozen at k_kappa 0.8, accel 2.5)
+
+| Map | Laps | Best flying lap | Notes |
+|---|---|---|---|
+| Development | 3 | **46.5 s** (46.6 repeat — 0.1 s consistency) | 0 collisions |
+| Evaluation A | 2+ | 63.2 s | 60% of run in SLOW zones — pace is regulation, not tuning (sign cap binding 72% of samples) |
+| Evaluation B | 2+ | 68.6 s | on-line box dodged every lap, recovery never needed |
+| Evaluation C | 2+ | 80.9 s | SLOW-capped most of lap (layout sightlines) |
+
+CSVs + four plots per run in `logs/` (regenerate with
+`make_plots.py <csv>`).
+
+## Vision robustness (required perturbation test)
+
+One lap each on the development layout; camera perturbations via
+`sign_camera_sim` params (`_brightness`, `_blur`, `_noise_sigma`):
+
+| Condition | Confirmations | False transitions |
+|---|---|---|
+| Baseline | 2/2 (NORMAL, BOOST) | 0 |
+| Brightness −70 | 2/2 | 0 |
+| Gaussian blur 7 px | 2/2 | 0 |
+
+ArUco decodes a binary grid, so moderate photometric degradation barely
+affects it; the 3-frame temporal filter removes any residual flicker.
+
 **Lesson worth presenting:** the failures found are architectural, not
 bugs — a bounded dodge *cannot* beat the path follower for obstacles dead
 on the racing line, by deliberate design (the same bound that keeps the
