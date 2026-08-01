@@ -8,6 +8,14 @@ set -e
 source /opt/ros/noetic/setup.bash
 source /root/catkin_ws/devel/setup.bash
 
+# Guard: a second sim instance triggers ROS same-name node kills that
+# leave the drive chain dead (see BUILDLOG). Refuse to double-start.
+if rostopic list >/dev/null 2>&1; then
+  echo "ERROR: a ROS master is already running. Stop it first:"
+  echo "  docker exec mushr_sim pkill -f ros"
+  exit 1
+fi
+
 MAP_NAME=${1:-track_development}
 LAYOUT=${2:-development}
 export MAP=/assignment/sim/maps/${MAP_NAME}.yaml
