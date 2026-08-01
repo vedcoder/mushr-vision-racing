@@ -82,6 +82,17 @@ rostopic echo /race/active_sign    # current speed-zone sign
 rostopic list | grep /race/        # all our topics (should be 10)
 ```
 
+## Health check BEFORE any official run (10 seconds)
+
+The sim can boot with a dead drivetrain (double-start race kills
+ackermann_to_vesc). Verify the car physically moves before trusting a run:
+
+```bash
+docker exec mushr_sim bash -c 'source /opt/ros/noetic/setup.bash; P0=$(rostopic echo -n1 /mushr_sim/car/odom/pose/pose/position/x | head -1); timeout 3 rostopic pub -r 10 /car/mux/ackermann_cmd_mux/input/navigation ackermann_msgs/AckermannDriveStamped "{drive: {speed: 0.5}}" >/dev/null 2>&1; P1=$(rostopic echo -n1 /mushr_sim/car/odom/pose/pose/position/x | head -1); echo "x: $P0 -> $P1"'
+```
+
+If x does not change: restart the sim (pkill -f ros, start_sim again).
+
 ## If something is wedged
 
 - Foxglove won't connect → is rosbridge up? `nc -z localhost 9090`.

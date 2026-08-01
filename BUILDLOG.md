@@ -18,7 +18,7 @@ Status legend: 🔲 planned · 🚧 in progress · ✅ done
 | 4 | ArUco sign detector + speed-zone state | Vision (17%) | ✅ |
 | 5 | LiDAR safety: clearance speed limit, e-stop, avoidance | LiDAR safety (18%) | ✅ |
 | 6 | Command arbiter (min-speed rule) + recovery FSM | Recovery (10%) | ✅ |
-| 7 | CSV logger + plot generation | Analysis & reproducibility (10%) | 🔲 |
+| 7 | CSV logger + plot generation | Analysis & reproducibility (10%) | ✅ |
 
 All code will live in a single catkin package, `race_stack/`, at the repo
 root, symlinked into the container's workspace. One node per concern, so
@@ -246,6 +246,26 @@ The sandbox retires. Six nodes, one launch file
   cmd_v > 0.1, but a full e-stop sets cmd_v = 0 — recovery was unreachable
   in exactly the deepest deadlock. Fixed: also trigger when the lidar cap
   pins the car (< 0.3). Kept here because it's a good war story.
+
+## Step 7 — race logger + plots ✅
+
+`race_logger.py` runs with the stack (race.launch, `run_name:=<name>`),
+writing 20 Hz CSV rows with every submission-checklist column (time, pose,
+commanded speed/steering, min LiDAR range, active sign, state, lap,
+progress, lateral error, all three caps). `make_plots.py <csv>` produces
+the four required figures: speed-vs-caps (the arbiter picture),
+speed profile by track position, tracking error, obstacle clearance —
+plus lap times.
+
+**Official 3-lap run on track_development:** 3 laps, flying laps
+**48.9 s and 48.8 s** (0.1 s repeatability), zero contact.
+
+**The logger paid for itself on its first outing:** run #1 recorded the
+car frozen at the start line while commanding 1.1 m/s — the CSV proved
+the stack was fine and the *sim's* drivetrain was dead
+(ackermann_to_vesc killed by a double sim start: "new node registered
+with same name"). New rule in the RUNBOOK: before any official run, do a
+2-second manual drive test; if the car doesn't move, restart the sim.
 
 **Lesson worth presenting:** the failures found are architectural, not
 bugs — a bounded dodge *cannot* beat the path follower for obstacles dead

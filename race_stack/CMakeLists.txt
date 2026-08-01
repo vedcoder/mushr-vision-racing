@@ -13,5 +13,6 @@ catkin_install_python(
     scripts/path_follower.py
     scripts/speed_planner.py
     scripts/arbiter.py
+    scripts/race_logger.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
