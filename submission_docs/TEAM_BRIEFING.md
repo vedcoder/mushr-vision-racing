@@ -129,3 +129,40 @@ Q&A. Companion docs: [PRESENTATION.md](PRESENTATION.md) (slide guide),
 - The recovery-demo teleport command ready in a second terminal (in the
   RUNBOOK, "Live demo" section)
 - Videos downloaded locally as backup for the Drive links
+
+## Simulator Q&A (they will probe this — it's custom-adapted)
+
+1. **What sim?** Official MuSHR simulator (UW Personal Robotics Lab,
+   ROS 1 Noetic), in Docker — their supported install path.
+2. **Physics?** Kinematic bicycle model at 20 Hz behind a simulated VESC
+   chain (our Ackermann msgs → ERPM/servo → motion model — same command
+   path as the real car). Kinematic, not dynamic: no tire slip/inertia;
+   fine at ≤2.5 m/s, stated limitation beyond.
+3. **LiDAR?** Raycast against the occupancy grid: 720 rays, 360°, 10 Hz,
+   10 m, with a probabilistic beam-noise model that produces phantom
+   single-ray short returns — realistic, broke our first detector, and is
+   why every clearance we compute is a percentile.
+4. **Camera?** (most likely question) Stock sim has none; the handout
+   expects an adapter. Ours renders the real ArUco board textures via a
+   true pinhole projection at the instructor-YAML poses — 640×480,
+   ~15 Hz, 70° FOV, boards visible ≤8 m / front side / in-FOV — so
+   difficulty scales genuinely with distance and angle, and the detector
+   runs unmodified OpenCV. Perturbation params enabled the robustness
+   test.
+5. **Obstacles?** Baked into map variants (rasterized from instructor
+   YAMLs) because the LiDAR raycasts the grid — a handout requirement.
+   Same grid blocks the car on contact and logs "Not in bounds": our
+   collision counter, which reads 0 across all runs.
+6. **Ground-truth localization?** (the gotcha — concede gracefully) Yes,
+   and it's a stated limitation. Odometry source is a launch parameter
+   on every node (zero code changes to switch); drift handling untested;
+   SLAM explicitly out of scope per the handout.
+7. **Sim-to-real: what transfers?** The architecture, the min() rule,
+   the noise-filtering philosophy, and the topic contract (real MuSHR
+   speaks the same interfaces). What doesn't, without work: perfect
+   localization, kinematic model at speed, camera lighting realism.
+8. **Repeatable?** Stochastic (noise models), but tiny variance where it
+   matters: 46.5 vs 46.6 s back-to-back flying laps.
+9. **Did you modify the sim?** Three one-word numpy compatibility fixes
+   (version-controlled in `sim/patches/`, auto-applied at startup). Core
+   behavior untouched; everything else sits beside it.
