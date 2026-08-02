@@ -18,3 +18,4 @@ sim/maps/
 __pycache__/
 *.pyc
 logs/
+video/
