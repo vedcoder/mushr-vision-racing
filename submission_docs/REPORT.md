@@ -177,6 +177,7 @@ pre-run drivetrain health check.
 | Vision evaluation table | §3 of this report |
 | Demonstration video | links above |
 | Engineering log / development history | `submission_docs/BUILDLOG.md` + prototype trail in `testing/` |
+| Tech-stack & design decision rationale | `submission_docs/DECISIONS.md` |
 
 ## Appendix A — team contributions
 
