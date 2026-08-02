@@ -20,23 +20,7 @@ immobilization without manual intervention. It is a ROS 1 (Noetic)
 package of six nodes running against the official MuSHR simulator in
 Docker; a seventh node logs every run to CSV.
 
-```
-                   centerline CSV
-                         │
-          ┌──────────────┼───────────────┐
-          ▼              ▼               ▼
-  waypoint_manager  path_follower   speed_planner
-  (position/laps)   (Pure Pursuit)  (curvature cap)
-          │              │               │
- camera ─► sign_detector ─┤   sign cap   │
- LiDAR  ─► lidar_safety ──┤ lidar cap +  │
-                          │   dodge      │
-                          ▼              ▼
-                 ┌─────────────────────────┐
-                 │ arbiter + recovery FSM  │──► drive command
-                 │ v = min(curve,sign,lidar)│──► race_logger
-                 └─────────────────────────┘
-```
+![System architecture](../docs/figures/architecture.png)
 
 The architectural rule is single drive authority: every node publishes an
 *opinion* (a steering suggestion or a speed ceiling) and only the arbiter
