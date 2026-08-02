@@ -20,18 +20,22 @@ immobilization without manual intervention. It is a ROS 1 (Noetic)
 package of six nodes running against the official MuSHR simulator in
 Docker; a seventh node logs every run to CSV.
 
-```mermaid
-flowchart LR
-  WP[waypoint_manager] -->|nearest wp / progress / laps| SP[speed_planner]
-  CSV[(centerline CSV)] --> WP & PF[path_follower] & SP
-  CAM[/camera/] --> SD[sign_detector]
-  LID[/LiDAR/] --> LS[lidar_safety]
-  PF -->|pp_steer| ARB[arbiter + recovery FSM]
-  SP -->|curve cap| ARB
-  SD -->|sign cap| ARB
-  LS -->|lidar cap + dodge| ARB
-  ARB -->|AckermannDriveStamped| CAR[(drive mux)]
-  ARB --> LOG[race_logger]
+```
+                   centerline CSV
+                         │
+          ┌──────────────┼───────────────┐
+          ▼              ▼               ▼
+  waypoint_manager  path_follower   speed_planner
+  (position/laps)   (Pure Pursuit)  (curvature cap)
+          │              │               │
+ camera ─► sign_detector ─┤   sign cap   │
+ LiDAR  ─► lidar_safety ──┤ lidar cap +  │
+                          │   dodge      │
+                          ▼              ▼
+                 ┌─────────────────────────┐
+                 │ arbiter + recovery FSM  │──► drive command
+                 │ v = min(curve,sign,lidar)│──► race_logger
+                 └─────────────────────────┘
 ```
 
 The architectural rule is single drive authority: every node publishes an
@@ -181,21 +185,25 @@ pre-run drivetrain health check.
 
 ## Appendix A — team contributions
 
-*(Fill each entry honestly and specifically — "worked on vision" is weak;
-"tuned the sign detector's confirmation threshold and ran the perturbation
-tests" is strong. Delete these instructions before submitting.)*
-
-- **Vidit Gupta:** *(e.g., environment bring-up and simulator debugging;
-  control-law experimentation and tuning across V_MAX/K_ALPHA sweeps;
-  all official runs, testing campaign, video production; …)*
-- **Amogh Saagar:** *(e.g., WSL/Foxglove setup and cross-platform
-  debugging that led to the auto-patching and double-start guards; …)*
-- **Rajdip Kundu:** *(e.g., independent Docker/ROS environment
-  evaluation that informed the stack choice; …)*
-- **Varchas Jasti:** *(…)*
+- **Vidit Gupta** — led all development: simulation environment bring-up
+  and debugging, the control/perception/safety/recovery stack
+  (pair-programmed with an AI assistant, with all design decisions and
+  parameters tested and verified in simulation), the tuning and
+  evaluation campaigns across four track configurations, all logged
+  official runs, demonstration videos, documentation, report, and
+  presentation materials.
+- **Amogh Saagar** — worked on cross-platform environment setup
+  (WSL/Docker/Foxglove); his setup attempts and debugging surfaced the
+  failure modes that led to the repository's line-ending enforcement,
+  automatic patch application, and double-start guard. Also assisted with
+  testing the Pure Pursuit follower once his environment was working.
+- **Varchas Jasti** — was unable to participate in development due to a
+  hardware failure (laptop motherboard).
+- **Rajdip Kundu** — evaluated an alternative ROS 2/Gazebo environment
+  during the initial platform decision; did not participate further.
 
 **Tools disclosure:** development was pair-programmed with an AI coding
 assistant (Claude); all design decisions, parameter choices, and test
-campaigns were reviewed, driven, and verified by the team. (Check the
-course's AI policy and phrase per its requirements — the repository's
-commit history transparently records the assistant as co-author.)
+campaigns were reviewed, driven, and verified by the team. The
+repository's commit history transparently records the assistant as
+co-author.
