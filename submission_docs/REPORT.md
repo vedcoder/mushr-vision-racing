@@ -1,10 +1,15 @@
 # MuSHR Vision-Aware Autonomous Racing — Team Report
 
-*Team mushr-vision-racing · repository:
-github.com/vedcoder/mushr-vision-racing · August 2026*
+*Vidit Gupta · Amogh Saagar · Rajdip Kundu · Varchas Jasti — August 2026*
 
-*(≤5 pages when exported. Figures: `../docs/figures/`. Reproduction:
-`README.md` + `RUNBOOK.md`. Per-step engineering log: `BUILDLOG.md`.)*
+**Repository (all code, docs, logs, figures):**
+https://github.com/vedcoder/mushr-vision-racing
+
+**Demonstration videos:** *(TEAM: upload the three videos and paste share
+links here before exporting)*
+- Three consecutive laps (lap counter on screen): `LINK`
+- Obstacle avoidance — box dead on the racing line: `LINK`
+- Automatic recovery — e-stop → reverse → resume: `LINK`
 
 ## 1. System overview
 
@@ -158,6 +163,20 @@ One-command environment (Docker + named volume), one launch file
 `race_stack/config/params.yaml`, every run producing a CSV and four
 plots. RUNBOOK.md contains exact start/stop/demo commands including the
 pre-run drivetrain health check.
+
+## Appendix B — deliverables index (everything lives in the repository)
+
+| Handout requirement | Location |
+|---|---|
+| ROS package, launch files, config | `race_stack/` (`launch/race.launch`, `config/params.yaml`) |
+| README with install + exact run commands | `README.md` + `submission_docs/RUNBOOK.md` |
+| One-page architecture diagram | §1 of this report / `submission_docs/ARCHITECTURE.md` |
+| Controller/vision/recovery parameter files | `race_stack/config/params.yaml` |
+| CSV logs (time, pose, speed, steering, min range, sign, state) | `results/*.csv` |
+| Plots (speed, steering, tracking error, clearance) | `docs/figures/` (generator: `race_stack/scripts/make_plots.py`) |
+| Vision evaluation table | §3 of this report |
+| Demonstration video | links above |
+| Engineering log / development history | `submission_docs/BUILDLOG.md` + prototype trail in `testing/` |
 
 ## Appendix A — team contributions
 
